@@ -1,0 +1,132 @@
+* プラグイン設定
+** leaf
+#+begin_src emacs-lisp
+  (leaf iceberg-theme
+  :ensure t
+  :config
+  (iceberg-theme-create-theme-file)
+  )
+#+end_src
+
+** webmode
+   [[https://web-mode.org/]]
+#+begin_src emacs-lisp
+  (leaf web-mode
+    :ensure t
+    :config
+    (add-to-list 'auto-mode-alist '("\\.php\\'" . web-mode))
+    )
+#+end_src
+
+** hydra
+   [[https://github.com/abo-abo/hydra]]
+  #+begin_src emacs-lisp
+     (defhydra hydra-menu
+       (:pre (mac-select-input-source 'ascii-capable-keyboard))
+       ("ww" window-menu/body "windows-menu" :exit t :column "[w]indow")
+       ("w1" delete-other-windows "delete other windows" :exit t)
+       ("w3" split-window-right "split window right" :exit t)
+       ("wo" other-window "other windows" :exit t)
+       ("dk" describe-key "describe-key" :exit t :column "[d]escribe")
+       ("df" describe-function "describe-function" :exit t)
+       ("dv" describe-variable "describe-variable" :exit t)
+       ("eb" eval-buffer "eval-buffer" :exit t :column "[e]val")
+       ("ei" (load-file (expand-file-name "init.el" user-emacs-directory)) "eval-init.el" :exit t)
+       ("ci" indent-region "indent-region" :exit t :column "other")
+       ("v" vterm "vterm" :exit t)
+       ("l" bookmark-bmenu-list "bookmark list" :exit t)
+       ("sc" (switch-to-buffer "*scratch*") "scratch" :exit t)
+       ("m" moveCursor-menu/body "moveCursor menu" :exit t)
+       ("o" toggle-truncate-lines "toggle truncate-lines" :exit t)
+       ("'" org-edit-special "org-edit-special" :exit t)
+       ("q" nil "quit hydra-menu"))
+
+    (defhydra window-menu ()
+      ("l" enlarge-window-horizontally "enlarge window")
+      ("h" shrink-window-horizontally "shrink window")
+      ("q" nil "quit")
+      )
+
+    (defhydra moveCursor-menu ()
+      ("j" next-line "down")
+      ("k" previous-line "up")
+      ("l" forward-char "left")
+      ("h" backward-char "right")
+      ("n" scroll-up-command "page down")
+      ("p" scroll-down-command "page up")
+      ("q" nil "quit")
+      )
+
+  #+end_src
+
+* 一般設定
+** フォント設定
+#+begin_src emacs-lisp
+(add-to-list 'default-frame-alist '(font . "Menlo-14"))
+#+end_src
+
+** カラーテーマ
+#+begin_src emacs-lisp
+  ;(load-theme 'misterioso t)
+  (load-theme 'solarized-iceberg-dark t)
+#+end_src
+
+* キーバインド
+*** Command + キー
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "s-a") 'mark-whole-buffer)
+  (global-set-key (kbd "s-h") 'other-window)
+  (global-set-key (kbd "s-l") 'other-window)
+  (global-set-key (kbd "s-,") 'my-open-init-el)
+  (global-set-key (kbd "s--") 'text-scale-decrease)
+  (global-set-key (kbd "s-=") 'text-scale-increase)
+  (global-set-key (kbd "s-c") 'kill-ring-save)
+  (global-set-key (kbd "s-v") 'yank)
+  (global-set-key (kbd "s-x") 'kill-region)
+  (global-set-key (kbd "s-z") 'undo)
+  (global-set-key (kbd "s-s") 'save-buffer)
+  (global-set-key (kbd "s-q") 'save-buffers-kill-terminal)
+  (global-set-key (kbd "s-f") 'isearch-forward)
+  (global-set-key (kbd "s-m") 'hydra-menu/body)
+#+END_SRC
+
+*** Ctrl + Command + キー
+#+begin_src emacs-lisp
+(define-key global-map (kbd "C-s-f") 'toggle-frame-fullscreen)
+#+end_src
+
+*** Ctrl + Shift + キー
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-S-V") 'scroll-down-command)
+#+end_src
+
+* 変数
+#+BEGIN_SRC emacs-lisp
+  (setq mac-pass-command-to-system nil)
+  (setq org-use-speed-commands t)
+  (tool-bar-mode -1)
+  (menu-bar-mode -1)
+  (mac-auto-ascii-mode 1)
+  (ido-mode 1)
+  (display-time-mode 1)
+  (setq mac-command-key-is-meta nil)
+  (setq mac-option-modifier 'meta)
+  (setq mac-command-modifier 'super)
+  (show-paren-mode 1)
+  (global-display-line-numbers-mode)
+  (savehist-mode 1)
+
+
+
+#+END_SRC
+
+
+* 自作関数
+** toggle-truncate-lines
+#+begin_src emacs-lisp
+  (defun toggle-truncate-lines ()
+    (interactive)
+    (set-variable 'truncate-lines (not truncate-lines)))
+#+end_src
+
+
