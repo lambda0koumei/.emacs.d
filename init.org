@@ -1,5 +1,5 @@
-* プラグイン設定
-** package
+* 初期設定
+** package初期化
    #+begin_src emacs-lisp
      (package-initialize)
      (setq package-archives
@@ -7,20 +7,65 @@
 	     ("melpa" . "http://melpa.org/packages/")
 	     ("org" . "http://orgmode.org/elpa/")))
    #+end_src
-
 ** leafインストール
-   https://github.com/conao3/leaf.el
    #+begin_src emacs-lisp
      (unless (package-installed-p 'leaf)
        (package-refresh-contents)
        (package-install 'leaf))
+   #+end_src
+* プラグイン設定
+
+** leaf
+   https://github.com/conao3/leaf.el
+   #+begin_src emacs-lisp
      (leaf leaf-keywords
        :ensure t
        :init
        :config
        (leaf-keywords-init))
    #+end_src
+
+** vterm
+   https://github.com/akermu/emacs-libvterm
+   #+begin_src emacs-lisp
+     (leaf vterm
+       :ensure t
+       :config
+       (add-hook 'emacs-startup-hook
+		 '(lambda() (vterm)
+		    (let* ((w (selected-window)))
+		      (let* ((size (- (frame-height) 5)) (w2 (split-window w size))))))))
+
+   #+end_src
    
+** auto-complete
+   https://github.com/auto-complete/auto-complete
+   #+begin_src emacs-lisp
+     (leaf auto-complete
+       :ensure t
+       :config
+       (ac-config-default))
+   #+end_src
+
+** ac-php
+   https://github.com/xcwen/ac-php
+   #+begin_src emacs-lisp
+     (leaf ac-php
+       :ensure t
+       :config
+       (add-hook 'php-mode-hook
+		 '(lambda()
+		    (require 'ac-php)
+		    (auto-complete-mode t)
+		    (setq ac-sources '(ac-source-php))))
+       (add-hook 'web-mode-hook
+		 '(lambda()
+		    (require 'ac-php)
+		    (setq web-mode-ac-sources-alist '(("php" . (ac-source-php))))
+		    ))
+       )
+   #+end_src   
+
 ** iceberg
    https://github.com/conao3/iceberg-theme.el
    #+begin_src emacs-lisp
@@ -33,16 +78,26 @@
 
 ** which-key
    https://github.com/justbur/emacs-which-key
+   prefixキーを押した際に次のキーを表示する。
+   個人的に必須。
    #+begin_src emacs-lisp
      (leaf which-key
        :ensure t
        :config
        (which-key-setup-side-window-bottom)
        (which-key-mode)
-       (define-key help-map (kbd "C-h") 'which-key-C-h-dispatch)
+       (define-key help-map (kbd "<f1>") 'which-key-C-h-dispatch)
        )
    #+end_src
+** php-mode
+   https://github.com/emacs-php/php-mode
+   #+begin_src emacs-lisp
+     (leaf php-mode
+       :ensure t
+       )
 
+   #+end_src
+   
 ** webmode
    [[https://web-mode.org/]]
    #+begin_src emacs-lisp
@@ -53,51 +108,52 @@
        )
    #+end_src
 
+** markdown-mode
+   #+begin_src emacs-lisp
+     (leaf markdown-mode
+       :ensure t)
+   #+end_src
+
 ** hydra
    [[https://github.com/abo-abo/hydra]]
    #+begin_src emacs-lisp
-     (defhydra hydra-menu
-       (:pre (mac-select-input-source 'ascii-capable-keyboard))
-       ("ww" window-menu/body "windows-menu" :exit t :column "[w]indow")
-       ("w1" delete-other-windows "delete other windows" :exit t)
-       ("w3" split-window-right "split window right" :exit t)
-       ("wo" other-window "other windows" :exit t)
-       ("dk" describe-key "describe-key" :exit t :column "[d]escribe")
-       ("df" describe-function "describe-function" :exit t)
-       ("dv" describe-variable "describe-variable" :exit t)
-       ("eb" eval-buffer "eval-buffer" :exit t :column "[e]val")
-       ("ei" (load-file (expand-file-name "init.el" user-emacs-directory)) "eval-init.el" :exit t)
-       ("ci" indent-region "indent-region" :exit t :column "other")
-       ("v" vterm "vterm" :exit t)
-       ("l" bookmark-bmenu-list "bookmark list" :exit t)
-       ("sc" (switch-to-buffer "*scratch*") "scratch" :exit t)
-       ("m" moveCursor-menu/body "moveCursor menu" :exit t)
-       ("o" toggle-truncate-lines "toggle truncate-lines" :exit t)
-       ("'" org-edit-special "org-edit-special" :exit t)
-       ("q" nil "quit hydra-menu"))
-
-     (defhydra window-menu ()
-       ("l" enlarge-window-horizontally "enlarge window")
-       ("h" shrink-window-horizontally "shrink window")
-       ("q" nil "quit")
-       )
-
-     (defhydra moveCursor-menu ()
-       ("j" next-line "down")
-       ("k" previous-line "up")
-       ("l" forward-char "left")
-       ("h" backward-char "right")  
-       ("n" scroll-up-command "page down")
-       ("p" scroll-down-command "page up")
-       ("q" nil "quit")
-       )
-
+     (leaf hydra
+       :ensure t)
    #+end_src
+*** hydra-menu
+    #+begin_src emacs-lisp
+      (defhydra hydra-menu
+	(:pre (mac-select-input-source 'ascii-capable-keyboard))
+	"
+      CheatSheet:
+      c-s:isearch-forward| c-r: isearch-backward| c-/:undo| c-g c-/: redo
+
+      "
+	("e" (load-file (expand-file-name "init.el" user-emacs-directory)) "eval-init.el" :exit t :column "[e]val")
+	("i" indent-region "indent-region" :exit t :column "other")
+	("b" bookmark-bmenu-list "bookmark list" :exit t)
+	("o" toggle-truncate-lines "toggle truncate-lines" :exit t)
+	("r" query-replace "replace" :exit t)
+	("sc" (switch-to-buffer "*scratch*") "scratch" :exit t)
+	("so" sort-lines "sort-lines" :exit t)
+	("v" vterm "vterm" :exit t)
+	("q" nil "quit hydra-menu")
+	("s-m" nil "quit hydra-menu")
+	)
+
+    #+end_src
 
 * 一般設定
+
+** 自動分割の制御
+   Window-choiceを参照。
+   #+begin_src emacs-lisp
+     (setq split-width-threshold (frame-width))
+   #+end_src   
+
 ** フォント設定
    #+begin_src emacs-lisp
-     (add-to-list 'default-frame-alist '(font . "Ricty Diminished 20"))
+     (add-to-list 'default-frame-alist '(font . "Ricty Diminished 19"))
 
    #+end_src
 
@@ -107,23 +163,56 @@
      (load-theme 'solarized-iceberg-dark t)
    #+end_src
 
+* 関数定義
+** move-border
+   #+begin_src emacs-lisp
+     (defun my-move-border(arg) (interactive)
+	    (seq-let (move-left move-top move-right move-bottom) arg
+	      (seq-let (zero-rowedge zero-coledge) (mapcar 'zerop (window-edges))
+		(call-interactively
+		 (cond ((and move-left zero-rowedge) 'shrink-window-horizontally)
+		       ((and move-left (not zero-rowedge)) 'enlarge-window-horizontally)
+		       ((and move-top zero-coledge) 'shrink-window)
+		       ((and move-top (not zero-coledge)) 'enlarge-window)
+		       ((and move-right zero-rowedge) 'enlarge-window-horizontally)
+		       ((and move-right (not zero-rowedge)) 'shrink-window-horizontally)
+		       ((and move-bottom zero-coledge) 'enlarge-window)
+		       ((and move-bottom (not zero-coledge)) 'shrink-window)
+		       )))))
+
+     (defun my-move-border-left() (interactive)
+	    (my-move-border '(t)))
+     (defun my-move-border-top() (interactive)
+	    (my-move-border '(nil t)))
+     (defun my-move-border-right() (interactive)
+	    (my-move-border '(nil nil t )))
+     (defun my-move-border-bottom() (interactive)
+	    (my-move-border '(nil nil nil t)))
+   #+end_src
+
+
 * キーバインド
 ** Command + キー
    #+BEGIN_SRC emacs-lisp
-     (global-set-key (kbd "s-a") 'mark-whole-buffer)
-     (global-set-key (kbd "s-h") 'other-window)
-     (global-set-key (kbd "s-l") 'other-window)
-     (global-set-key (kbd "s-,") 'my-open-init-el)
      (global-set-key (kbd "s--") 'text-scale-decrease)
+     (global-set-key (kbd "s-l") 'my-move-border-right)
+     (global-set-key (kbd "s-h") 'my-move-border-left)
+     (global-set-key (kbd "s-j") 'my-move-border-bottom)
+     (global-set-key (kbd "s-k") 'my-move-border-top)
+     (global-set-key (kbd "s-r") 'query-replace)
+
      (global-set-key (kbd "s-=") 'text-scale-increase)
+     (global-set-key (kbd "s-a") 'mark-whole-buffer)
      (global-set-key (kbd "s-c") 'kill-ring-save)
+     (global-set-key (kbd "s-f") 'isearch-forward)
+     (global-set-key (kbd "s-n") 'other-window)
+     (global-set-key (kbd "s-m") 'hydra-menu/body)
+     (global-set-key (kbd "s-q") 'save-buffers-kill-terminal)
+     (global-set-key (kbd "s-s") 'save-buffer)
      (global-set-key (kbd "s-v") 'yank)
+     (global-set-key (kbd "s-w") 'delete-window)
      (global-set-key (kbd "s-x") 'kill-region)
      (global-set-key (kbd "s-z") 'undo)
-     (global-set-key (kbd "s-s") 'save-buffer)
-     (global-set-key (kbd "s-q") 'save-buffers-kill-terminal)
-     (global-set-key (kbd "s-f") 'isearch-forward)
-     (global-set-key (kbd "s-m") 'hydra-menu/body)
 
    #+END_SRC
 
@@ -134,24 +223,27 @@
 
 ** Ctrl + Shift + キー
    #+begin_src emacs-lisp
-     (global-set-key (kbd "C-S-V") 'scroll-down-command)
+					     ;(global-set-key (kbd "C-S-V") 'scroll-down-command)
    #+end_src
 
 * 変数
   #+BEGIN_SRC emacs-lisp
+    (display-time-mode 1)
+    (global-display-line-numbers-mode)
+    (ido-mode 1)
+    (mac-auto-ascii-mode 1)
+    (menu-bar-mode -1)
+    (savehist-mode 1)
+    (setq tab-always-indent 'complete)
+    (setq mac-command-key-is-meta nil)
+    (setq mac-command-modifier 'super)
+    (setq mac-option-modifier 'meta)
     (setq mac-pass-command-to-system nil)
     (setq org-use-speed-commands t)
-    (tool-bar-mode -1)
-    (menu-bar-mode -1)
-    (mac-auto-ascii-mode 1)
-    (ido-mode 1)
-    (display-time-mode 1)
-    (setq mac-command-key-is-meta nil)
-    (setq mac-option-modifier 'meta)
-    (setq mac-command-modifier 'super)
     (show-paren-mode 1)
-    (global-display-line-numbers-mode)
-    (savehist-mode 1)
+    (set-face-foreground 'show-paren-match "#ff0000")
+    (tool-bar-mode -1)
   #+END_SRC
+
 
 
