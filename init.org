@@ -26,8 +26,8 @@
 ** blackout
    #+begin_src emacs-lisp
      (leaf blackout
-  :ensure t)
-#+end_src
+       :ensure t)
+   #+end_src
    
 ** exec-path
    #+begin_src emacs-lisp
@@ -54,10 +54,11 @@
    #+begin_src emacs-lisp
      (leaf rainbow-mode
        :ensure t
-  :blackout t
+       :blackout t
        :hook
        css-mode-hook
        org-mode-hook
+       php-mode-hook
        web-mode-hook)
    #+end_src   
 
@@ -86,7 +87,7 @@
    #+begin_src emacs-lisp
      (leaf company
        :ensure t
-  :blackout t
+       :blackout t
        :global-minor-mode global-company-mode
        :custom
        ((company--idle-delay . 0)
@@ -129,7 +130,7 @@
    #+begin_src emacs-lisp
      (leaf which-key
        :ensure t
-  :blackout t
+       :blackout t
        :config
        (which-key-setup-side-window-bottom)
        (which-key-mode)
@@ -300,7 +301,7 @@
        ("f" my-hydra-search-forward-char "search-forward-char")
        ("b" my-hydra-search-backward-char "search-backward-char")
        ("r" my-search-target-char-reset "char-reset")
-       ("SPC" set-mark-command "set-mark-comand")
+       ("SPC" set-mark-command "set-mark-toggle")
        ("q" nil "quit")
        )
    #+end_src
@@ -316,28 +317,31 @@
      (define-key 'my-map (kbd "s-l") 'my-mac-lock)
      (define-key 'my-map (kbd "s-v") 'vterm)
      (define-key 'my-map (kbd "s-s") 'my-switch-scratch)
-     (define-key 'my-map (kbd "s-i") 'indent-region)
+     (define-key 'my-map (kbd "s-i s-r") 'indent-region)
+     (define-key 'my-map (kbd "s-i s-b") 'my-indent-buffer)
      (define-key 'my-map (kbd "s-b") 'bookmark-bmenu-list)
      (define-key 'my-map (kbd "s") 'sort-lines)
+
+     (defun my-indent-buffer ()
+       (interactive)(indent-region (point-min) (point-max)))
 
      (defun my-load-init-el()
        (interactive)(load-file (expand-file-name "init.el" user-emacs-directory)))
 
-     (defun my-switch-scratch () (interactive) (switch-to-buffer "*scratch*"))
+     (defun my-switch-scratch ()
+       (interactive) (switch-to-buffer "*scratch*"))
    #+end_src
 ** Ctrl + キー
    #+begin_src emacs-lisp
-          (global-set-key (kbd "C-f") (lambda (arg) (interactive "p")
-                                        (cond
-                                         ((= arg 4) (hydra-search-char/my-hydra-search-forward-char))
-                                         (t (forward-char)))))
+     (global-set-key (kbd "C-f") (lambda (arg) (interactive "p")
+                                   (cond
+                                    ((= arg 4) (hydra-search-char/my-hydra-search-forward-char))
+                                    (t (forward-char)))))
 
-          (global-set-key (kbd "C-b") (lambda (arg) (interactive "p")
-                                        (cond
-                                         ((= arg 4) (hydra-search-char/my-hydra-search-backward-char))
-                                         (t (backward-char)))))
-
-
+     (global-set-key (kbd "C-b") (lambda (arg) (interactive "p")
+                                   (cond
+                                    ((= arg 4) (hydra-search-char/my-hydra-search-backward-char))
+                                    (t (backward-char)))))
 
    #+end_src   
 ** Command + キー
@@ -355,7 +359,7 @@
      (global-set-key (kbd "s-n") 'other-window)
      (global-set-key (kbd "s-q") 'save-buffers-kill-terminal)
      (global-set-key (kbd "s-r") 'query-replace)
-     (global-set-key (kbd "s-s") 'save-buffer)
+     (global-set-key (kbd "s-s") '(lambda () (interactive) (my-indent-buffer) (save-buffer)))
      (global-set-key (kbd "s-v") 'yank)
      (global-set-key (kbd "s-w") 'delete-window)
      (global-set-key (kbd "s-x") 'kill-region)
@@ -378,17 +382,24 @@
 ** バックアップファイルの作成の抑止
    #+begin_src emacs-lisp
      (setq make-backup-files nil)
-     (setq delete-auto-save-files t)
    #+end_src
-
+** モードラインに時計を表示する
+   #+begin_src emacs-lisp
+     (display-time-mode t)
+     (setq display-time-interval 1)
+     (setq display-time-string-forms
+           '((format "%s/%s[%s] %s:%s:%s"
+                     month day dayname 24-hours minutes seconds)))
+   #+end_src
+   
 ** その他
    #+begin_src emacs-lisp
-     (display-time-mode 1)
      (global-display-line-numbers-mode)
      (ido-mode 1)
      (mac-auto-ascii-mode 1)
      (require 'generic-x)
      (savehist-mode 1)
+     (set-face-foreground 'hi-yellow "#000000")
      (set-face-foreground 'show-paren-match "#ff0000")
      (setq mac-command-key-is-meta nil)
      (setq mac-command-modifier 'super)
@@ -400,7 +411,6 @@
      (setq-default indent-tabs-mode nil)
      (show-paren-mode 1)
      (tool-bar-mode -1)
-
    #+END_SRC   
 
 
