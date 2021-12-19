@@ -1,4 +1,4 @@
-初期設定
+* 初期設定
 ** package初期化
    #+begin_src emacs-lisp
      (setq package-archives
@@ -23,7 +23,44 @@
        :config
        (leaf-keywords-init))
    #+end_src
+** blackout
+   #+begin_src emacs-lisp
+     (leaf blackout
+  :ensure t)
+#+end_src
    
+** exec-path
+   #+begin_src emacs-lisp
+     (leaf exec-path-from-shell
+       :ensure t
+       :config
+       (exec-path-from-shell-initialize)
+       )
+
+   #+end_src
+   
+** lsp-mode
+   #+begin_src emacs-lisp
+     (leaf lsp-mode
+       :ensure t
+       :custom `((lsp-keymap-prefix . "C-c l"))
+       :hook
+       (html-mode-hook . lsp)
+       :commands (lsp)
+       )
+   #+end_src
+
+** rainbow-mode
+   #+begin_src emacs-lisp
+     (leaf rainbow-mode
+       :ensure t
+  :blackout t
+       :hook
+       css-mode-hook
+       org-mode-hook
+       web-mode-hook)
+   #+end_src   
+
 ** vterm
    https://github.com/akermu/emacs-libvterm
    #+begin_src emacs-lisp
@@ -45,42 +82,36 @@
        )
    #+end_src
 
-   
-** auto-complete
-   https://github.com/auto-complete/auto-complete
+** company-mode
    #+begin_src emacs-lisp
-     (leaf auto-complete
+     (leaf company
        :ensure t
-       :config
-       (ac-config-default))
-   #+end_src
-
-** ac-php
-   https://github.com/xcwen/ac-php
-   #+begin_src emacs-lisp
-     (leaf ac-php
-       :ensure t
-       :config
-       (add-hook 'php-mode-hook
-                 '(lambda()
-                    (require 'ac-php)
-                    (auto-complete-mode t)
-                    (setq ac-sources '(ac-source-php))))
-       (add-hook 'web-mode-hook
-                 '(lambda()
-                    (require 'ac-php)
-                    (setq web-mode-ac-sources-alist '(("php" . (ac-source-php))))
-                    ))
+  :blackout t
+       :global-minor-mode global-company-mode
+       :custom
+       ((company--idle-delay . 0)
+        (company-require-match . 'never)
+        (company-selection-wrap-around . t)
+        (company-tooltip-align-annotations . t)
+        (company-minimum-prefix-length . 2))
        )
-   #+end_src   
 
-** iceberg
-   https://github.com/conao3/iceberg-theme.el
+   #+end_src
+   
+** yasnippet
    #+begin_src emacs-lisp
-     (leaf iceberg-theme
+     (leaf yasnippet
        :ensure t
-       :config
-       (iceberg-theme-create-theme-file)
+       :init (yas-global-mode 1)
+       )
+   #+end_src
+** phpactor   
+   #+begin_src emacs-lisp
+     (leaf phpactor
+       :ensure t
+       )
+     (leaf company-phpactor
+       :ensure t
        )
    #+end_src
 ** emacs-doom-themes
@@ -95,10 +126,10 @@
    #+end_src
 ** which-key
    https://github.com/justbur/emacs-which-key
-   prefixキーを押した際に次のキーを表示する。
    #+begin_src emacs-lisp
      (leaf which-key
        :ensure t
+  :blackout t
        :config
        (which-key-setup-side-window-bottom)
        (which-key-mode)
@@ -110,67 +141,79 @@
    #+begin_src emacs-lisp
      (leaf php-mode
        :ensure t
-       )
-
+       :config
+       (add-hook 'php-mode-hook (lambda ()
+                                  (setq-local company-backends '(company-phpactor company-files))
+                                  (setq-local company-transformers '(company-sort-prefer-same-case-prefix))
+                                  )))
    #+end_src
-   
+
 ** webmode
    [[https://web-mode.org/]]
    #+begin_src emacs-lisp
      (leaf web-mode
        :ensure t
        :config
-       (add-to-list 'auto-mode-alist '("\\.php\\'" . web-mode))
+       (setq web-mode-enable-auto-pairing t)
+       (setq web-mode-enable-auto-closing t)
+       :custom
+       (web-mode-code-indent-offset . 2)
+       (web-mode-css-indent-offset . 2)
+       (web-mode-markup-indent-offset . 2)
+       :mode
+       "\\.php\\'"
        )
    #+end_src
+** company-prescient
+   #+begin_src emacs-lisp
+     (leaf company-prescient
+       :ensure t
+       :global-minor-mode t
+       )
 
+     (leaf prescient
+       :ensure t
+       :custom ((prescient-aggressive-file-save .t))
+       :global-minor-mode prescient-persist-mode
+       )
+   #+end_src
 ** markdown-mode
    #+begin_src emacs-lisp
      (leaf markdown-mode
        :ensure t)
    #+end_src
-
 ** hydra
    [[https://github.com/abo-abo/hydra]]
    #+begin_src emacs-lisp
      (leaf hydra
        :ensure t)
    #+end_src
-*** hydra-menu
-    #+begin_src emacs-lisp
-      (defhydra hydra-menu
-        (:pre (mac-select-input-source 'ascii-capable-keyboard))
-      "
-      CheatSheet:
-      c-s:isearch-forward| c-r: isearch-backward| c-/:undo| c-g c-/: redo
 
-      "
-        ("e" (load-file (expand-file-name "init.el" user-emacs-directory)) "eval-init.el" :exit t :column "[e]val")
-        ("i" indent-region "indent-region" :exit t :column "other")
-        ("b" bookmark-bmenu-list "bookmark list" :exit t)
-        ("o" toggle-truncate-lines "toggle truncate-lines" :exit t)
-        ("r" query-replace "replace" :exit t)
-        ("sc" (switch-to-buffer "*scratch*") "scratch" :exit t)
-        ("so" sort-lines "sort-lines" :exit t)
-        ("v" vterm "vterm" :exit t)
-        ("q" nil "quit hydra-menu")
-        ("s-m" nil "quit hydra-menu")
-        )
-    #+end_src
-
+** emms
+   https://www.gnu.org/software/emms/
+   #+begin_src emacs-lisp
+     (leaf emms
+       :ensure t
+       :config
+       (require 'emms-setup)
+       (require 'emms-player-vlc)
+       (emms-standard)
+       (emms-default-players)
+       (setq emms-repeat-playlist t)
+       (setq emms-source-file-default-directory "~/Music/")
+       (setq emms-player-vlc-command-name "/Applications/VLC.app/Contents/MacOS/VLC")
+       )
+   #+end_src
 * 一般設定
-
 ** 自動分割の制御
    Window-choiceを参照。
    #+begin_src emacs-lisp
      (setq split-width-threshold (frame-width))
    #+end_src   
-
 ** フォント設定
    #+begin_src emacs-lisp
      (add-to-list 'default-frame-alist '(font . "Ricty Diminished 19"))
    #+end_src
-
 * 関数定義
 ** my-finder-open
    #+begin_src emacs-lisp
@@ -179,7 +222,6 @@
              (mapconcat #'shell-quote-argument
                         (list "open" ".") " ")))
    #+end_src  
-
 ** my-mac-lock
    #+begin_src emacs-lisp
      (defun my-mac-lock ()(interactive)
@@ -187,29 +229,120 @@
              (mapconcat #'shell-quote-argument
                         (list "pmset" "displaysleepnow") " ")))
    #+end_src   
-
 ** my-move-border
    #+begin_src emacs-lisp
      (defun my-move-border(move-x-amount move-y-amount)
-            (seq-let (move-x-dir move-y-dir)(mapcar (lambda (edge) (if (= edge 0) 1 -1)) (window-edges))
-              (enlarge-window-horizontally (* move-x-amount move-x-dir))
-              (enlarge-window (* move-y-amount move-y-dir))
-              ))
+       (seq-let (move-x-dir move-y-dir)(mapcar (lambda (edge) (if (zerop edge) 1 -1)) (window-edges))
+         (enlarge-window-horizontally (* move-x-amount move-x-dir))
+         (enlarge-window (* move-y-amount move-y-dir))
+         ))
 
      (defun my-move-border-left (arg) (interactive "p")
-            (my-move-border (* -1 arg) 0))
+            (my-move-border (- arg) 0))
      (defun my-move-border-right (arg) (interactive "p")
             (my-move-border arg 0))
      (defun my-move-border-top (arg) (interactive "p")
-            (my-move-border 0 (* -1 arg)))
+            (my-move-border 0 (- arg)))
      (defun my-move-border-bottom (arg) (interactive "p")
             (my-move-border 0 arg))
-
    #+end_src
 
+** my-search-char
+   #+begin_src emacs-lisp
+     (defvar my-search-target-char nil)
+
+     (defun my-search-target-char-reset()
+       (interactive)
+       (when my-search-target-char
+         (unhighlight-regexp (char-to-string my-search-target-char))
+         (setq my-search-target-char nil)))
+
+     (defun my-isearch-forward-char(char)
+       (interactive "c")
+       (when (> char 32)
+         (setq my-search-target-char char)
+         (highlight-regexp (char-to-string my-search-target-char))
+         (call-interactively 'my-search-forward-char)))
+
+     (defun my-isearch-backward-char(char)
+       (interactive "c")
+       (when (> char 32)
+         (setq my-search-target-char char)
+         (highlight-regexp (char-to-string my-search-target-char))
+         (call-interactively 'my-search-backward-char)))
+
+     (defun my-search-forward-char()
+       (interactive)
+       (let* ((char my-search-target-char))
+         (when (= (char-after (point)) char)(forward-char))
+         (search-forward (char-to-string char))
+         (backward-char)
+         ))
+
+     (defun my-search-backward-char()
+       (interactive)
+       (let* ((char my-search-target-char))
+         (search-backward(char-to-string char))))
+
+     (defun my-hydra-search-forward-char()
+       (interactive)
+       (if my-search-target-char
+           (call-interactively 'my-search-forward-char)
+         (call-interactively 'my-isearch-forward-char)))
+
+     (defun my-hydra-search-backward-char()
+       (interactive)
+       (if my-search-target-char
+           (call-interactively 'my-search-backward-char)
+         (call-interactively 'my-isearch-backward-char)))
+
+     (defhydra hydra-search-char(:post (my-search-target-char-reset) :hint nil)
+       ("f" my-hydra-search-forward-char "search-forward-char")
+       ("b" my-hydra-search-backward-char "search-backward-char")
+       ("r" my-search-target-char-reset "char-reset")
+       ("SPC" set-mark-command "set-mark-comand")
+       ("q" nil "quit")
+       )
+   #+end_src
+   
 * キーバインド
+** my-map
+   #+begin_src emacs-lisp
+     (define-prefix-command 'my-map)
+     (global-set-key (kbd "s-m") 'my-map)
+     (define-key 'my-map (kbd "s-e") 'my-load-init-el)
+     (define-key 'my-map (kbd "s-f") 'my-finder-open)
+     (define-key 'my-map (kbd "s-r") 'query-replace)
+     (define-key 'my-map (kbd "s-l") 'my-mac-lock)
+     (define-key 'my-map (kbd "s-v") 'vterm)
+     (define-key 'my-map (kbd "s-s") 'my-switch-scratch)
+     (define-key 'my-map (kbd "s-i") 'indent-region)
+     (define-key 'my-map (kbd "s-b") 'bookmark-bmenu-list)
+     (define-key 'my-map (kbd "s") 'sort-lines)
+
+     (defun my-load-init-el()
+       (interactive)(load-file (expand-file-name "init.el" user-emacs-directory)))
+
+     (defun my-switch-scratch () (interactive) (switch-to-buffer "*scratch*"))
+   #+end_src
+** Ctrl + キー
+   #+begin_src emacs-lisp
+          (global-set-key (kbd "C-f") (lambda (arg) (interactive "p")
+                                        (cond
+                                         ((= arg 4) (hydra-search-char/my-hydra-search-forward-char))
+                                         (t (forward-char)))))
+
+          (global-set-key (kbd "C-b") (lambda (arg) (interactive "p")
+                                        (cond
+                                         ((= arg 4) (hydra-search-char/my-hydra-search-backward-char))
+                                         (t (backward-char)))))
+
+
+
+   #+end_src   
 ** Command + キー
    #+BEGIN_SRC emacs-lisp
+     (define-key key-translation-map [?\s-'] [?\C-c ?\'])
      (global-set-key (kbd "s--") 'text-scale-decrease)
      (global-set-key (kbd "s-=") 'text-scale-increase)
      (global-set-key (kbd "s-a") 'mark-whole-buffer)
@@ -219,7 +352,6 @@
      (global-set-key (kbd "s-j") 'my-move-border-bottom)
      (global-set-key (kbd "s-k") 'my-move-border-top)
      (global-set-key (kbd "s-l") 'my-move-border-right)
-     (global-set-key (kbd "s-m") 'hydra-menu/body)
      (global-set-key (kbd "s-n") 'other-window)
      (global-set-key (kbd "s-q") 'save-buffers-kill-terminal)
      (global-set-key (kbd "s-r") 'query-replace)
@@ -236,26 +368,40 @@
    #+end_src
 
 * その他
-  #+BEGIN_SRC emacs-lisp
-    (setq-default indent-tabs-mode nil)
-    (display-time-mode 1)
-    (global-display-line-numbers-mode)
-    (ido-mode 1)
-    (mac-auto-ascii-mode 1)
-    (menu-bar-mode -1)
-    (savehist-mode 1)
-    (setq tab-always-indent 'complete)
-    (setq mac-command-key-is-meta nil)
-    (setq mac-command-modifier 'super)
-    (setq mac-option-modifier 'meta)
-    (setq mac-pass-command-to-system nil)
-    (setq org-use-speed-commands t)
-    (show-paren-mode 1)
-    (set-face-foreground 'show-paren-match "#ff0000")
-    (tool-bar-mode -1)
-    (require 'generic-x)
+** emacsウィンドウのフォーカスのオンオフを分かりやすくする  
+   #+BEGIN_SRC emacs-lisp
+     (defvar my-temp-cursor-color (face-attribute 'cursor :background))
+     (add-hook 'focus-in-hook '(lambda () (set-cursor-color my-temp-cursor-color)))
+     (add-hook 'focus-out-hook '(lambda () (set-cursor-color "#ff0000")))
+   #+end_src
 
-  #+END_SRC
+** バックアップファイルの作成の抑止
+   #+begin_src emacs-lisp
+     (setq make-backup-files nil)
+     (setq delete-auto-save-files t)
+   #+end_src
+
+** その他
+   #+begin_src emacs-lisp
+     (display-time-mode 1)
+     (global-display-line-numbers-mode)
+     (ido-mode 1)
+     (mac-auto-ascii-mode 1)
+     (require 'generic-x)
+     (savehist-mode 1)
+     (set-face-foreground 'show-paren-match "#ff0000")
+     (setq mac-command-key-is-meta nil)
+     (setq mac-command-modifier 'super)
+     (setq mac-option-modifier 'meta)
+     (setq mac-pass-command-to-system nil)
+     (setq org-use-speed-commands t)
+     (setq initial-buffer-choice "~/Documents/journal.org")
+     (setq initial-scratch-message "")
+     (setq-default indent-tabs-mode nil)
+     (show-paren-mode 1)
+     (tool-bar-mode -1)
+
+   #+END_SRC   
 
 
 
