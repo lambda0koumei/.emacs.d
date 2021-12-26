@@ -38,7 +38,7 @@
        )
 
    #+end_src
-   
+
 ** lsp-mode
    #+begin_src emacs-lisp
      (leaf lsp-mode
@@ -48,6 +48,12 @@
        (html-mode-hook . lsp)
        :commands (lsp)
        )
+   #+end_src
+
+** neon-mode
+   #+begin_src emacs-lisp
+     (leaf neon-mode
+       :ensure t)
    #+end_src
 
 ** rainbow-mode
@@ -69,12 +75,19 @@
        :ensure t
        :config
        (add-hook 'after-init-hook
+
                  '(lambda() (vterm)
                     (let* ((w-height (- (frame-height) 5)))
                       (let* ((w (selected-window)))
                         (let* ((w2 (split-window w w-height 'below)))
                           ))))))
 
+   #+end_src
+
+** multi-vterm
+   #+begin_src emacs-lisp
+     (leaf multi-vterm
+       :ensure t)
    #+end_src
 ** fish-mode
    #+begin_src emacs-lisp
@@ -95,6 +108,8 @@
         (company-selection-wrap-around . t)
         (company-tooltip-align-annotations . t)
         (company-minimum-prefix-length . 2))
+       :config
+       (define-key company-active-map (kbd "C-f") 'company-complete-selection)
        )
 
    #+end_src
@@ -133,6 +148,7 @@
        :blackout t
        :config
        (which-key-setup-side-window-bottom)
+       (setq which-key-idle-delay 1.0)
        (which-key-mode)
        (define-key help-map (kbd "<f1>") 'which-key-C-h-dispatch)
        )
@@ -144,9 +160,26 @@
        :ensure t
        :config
        (add-hook 'php-mode-hook (lambda ()
-                                  (setq-local company-backends '(company-phpactor company-files))
+                                  (when (zerop (buffer-size))
+                                    (insert "<?php\n\n"))
+                                  (setq-local company-backends '(company-phpactor company-capf company-files company-abbrev company-yasnippet))
                                   (setq-local company-transformers '(company-sort-prefer-same-case-prefix))
                                   )))
+   #+end_src
+** flycheck
+   #+begin_src emacs-lisp
+     (leaf flycheck
+       :blackout t
+       :ensure t
+       :init
+       (global-flycheck-mode t)
+       )
+   #+end_src
+   
+** flycheck-phpstan
+   #+begin_src emacs-lisp
+     (leaf flycheck-phpstan
+       :ensure t)
    #+end_src
 
 ** webmode
@@ -161,8 +194,6 @@
        (web-mode-code-indent-offset . 2)
        (web-mode-css-indent-offset . 2)
        (web-mode-markup-indent-offset . 2)
-       :mode
-       "\\.php\\'"
        )
    #+end_src
 ** company-prescient
@@ -216,6 +247,7 @@
      (add-to-list 'default-frame-alist '(font . "Ricty Diminished 19"))
    #+end_src
 * 関数定義
+
 ** my-finder-open
    #+begin_src emacs-lisp
      (defun my-finder-open ()(interactive)
@@ -250,57 +282,52 @@
 
 ** my-search-char
    #+begin_src emacs-lisp
-     (defvar my-search-target-char nil)
+     (defvar my-search-target nil)
 
-     (defun my-search-target-char-reset()
-       (interactive)
-       (when my-search-target-char
-         (unhighlight-regexp (char-to-string my-search-target-char))
-         (setq my-search-target-char nil)))
+     (defun my-search-target-set(char)
+       (setq my-search-target (regexp-opt-charset (list (upcase char) (downcase char))))
+       (highlight-regexp my-search-target))
 
-     (defun my-isearch-forward-char(char)
-       (interactive "c")
-       (when (> char 32)
-         (setq my-search-target-char char)
-         (highlight-regexp (char-to-string my-search-target-char))
-         (call-interactively 'my-search-forward-char)))
+     (defun my-search-target-reset() (interactive)
+            (when my-search-target
+              (unhighlight-regexp my-search-target)
+              (setq my-search-target nil)))
 
-     (defun my-isearch-backward-char(char)
-       (interactive "c")
-       (when (> char 32)
-         (setq my-search-target-char char)
-         (highlight-regexp (char-to-string my-search-target-char))
-         (call-interactively 'my-search-backward-char)))
+     (defun my-isearch-forward(char) (interactive "c")
+            (when (> char 32)
+              (my-search-target-set char)
+              (my-search-forward)))
 
-     (defun my-search-forward-char()
-       (interactive)
-       (let* ((char my-search-target-char))
-         (when (= (char-after (point)) char)(forward-char))
-         (search-forward (char-to-string char))
-         (backward-char)
-         ))
+     (defun my-isearch-backward(char) (interactive "c")
+            (when (> char 32)
+              (my-search-target-set char)
+              (my-search-backward)))
 
-     (defun my-search-backward-char()
-       (interactive)
-       (let* ((char my-search-target-char))
-         (search-backward(char-to-string char))))
+     (defun my-search-forward()
+       (when (looking-at my-search-target) (forward-char))
+       (re-search-forward my-search-target)
+       (backward-char))
 
-     (defun my-hydra-search-forward-char()
-       (interactive)
-       (if my-search-target-char
-           (call-interactively 'my-search-forward-char)
-         (call-interactively 'my-isearch-forward-char)))
+     (defun my-search-backward()
+       (re-search-backward my-search-target))
 
-     (defun my-hydra-search-backward-char()
-       (interactive)
-       (if my-search-target-char
-           (call-interactively 'my-search-backward-char)
-         (call-interactively 'my-isearch-backward-char)))
+     (defun my-hydra-search-forward() (interactive)
+            (if my-search-target
+                (my-search-forward)
+              (call-interactively 'my-isearch-forward)))
 
-     (defhydra hydra-search-char(:post (my-search-target-char-reset) :hint nil)
-       ("f" my-hydra-search-forward-char "search-forward-char")
-       ("b" my-hydra-search-backward-char "search-backward-char")
-       ("r" my-search-target-char-reset "char-reset")
+     (defun my-hydra-search-backward() (interactive)
+            (if my-search-target
+                (my-search-backward)
+              (call-interactively 'my-isearch-backward)))
+
+     (defhydra hydra-search-char(:post (my-search-target-reset) :hint nil)
+       "
+     target: %`my-search-target
+     "
+       ("f" my-hydra-search-forward "search-forward")
+       ("b" my-hydra-search-backward "search-backward")
+       ("r" my-search-target-reset "target-reset")
        ("SPC" set-mark-command "set-mark-toggle")
        ("q" nil "quit")
        )
@@ -321,6 +348,9 @@
      (define-key 'my-map (kbd "s-i s-b") 'my-indent-buffer)
      (define-key 'my-map (kbd "s-b") 'bookmark-bmenu-list)
      (define-key 'my-map (kbd "s") 'sort-lines)
+     (define-key 'my-map (kbd "s-m s-p") 'php-mode)
+     (define-key 'my-map (kbd "s-m s-o") 'org-mode)
+     (define-key 'my-map (kbd "s-m s-w") 'web-mode)
 
      (defun my-indent-buffer ()
        (interactive)(indent-region (point-min) (point-max)))
@@ -335,12 +365,12 @@
    #+begin_src emacs-lisp
      (global-set-key (kbd "C-f") (lambda (arg) (interactive "p")
                                    (cond
-                                    ((= arg 4) (hydra-search-char/my-hydra-search-forward-char))
+                                    ((= arg 4) (hydra-search-char/my-hydra-search-forward))
                                     (t (forward-char)))))
 
      (global-set-key (kbd "C-b") (lambda (arg) (interactive "p")
                                    (cond
-                                    ((= arg 4) (hydra-search-char/my-hydra-search-backward-char))
+                                    ((= arg 4) (hydra-search-char/my-hydra-search-backward))
                                     (t (backward-char)))))
 
    #+end_src   
@@ -382,6 +412,7 @@
 ** バックアップファイルの作成の抑止
    #+begin_src emacs-lisp
      (setq make-backup-files nil)
+     (setq delete-auto-save-files t)
    #+end_src
 ** モードラインに時計を表示する
    #+begin_src emacs-lisp
@@ -392,22 +423,29 @@
                      month day dayname 24-hours minutes seconds)))
    #+end_src
    
+** 起動時のバッファを変更する
+   #+begin_src emacs-lisp
+     (setq initial-buffer-choice "~/Documents/journal.org")
+   #+end_src
+** スクラッチ起動時のメッセージを変更する
+   #+begin_src emacs-lisp
+     (setq initial-scratch-message "")
+   #+end_src
 ** その他
    #+begin_src emacs-lisp
+     (column-number-mode t)
      (global-display-line-numbers-mode)
      (ido-mode 1)
      (mac-auto-ascii-mode 1)
      (require 'generic-x)
      (savehist-mode 1)
-     (set-face-foreground 'hi-yellow "#000000")
+     (add-hook 'hi-lock-mode-hook '(lambda ()(interactive) (set-face-foreground 'hi-yellow "#000000")))
      (set-face-foreground 'show-paren-match "#ff0000")
      (setq mac-command-key-is-meta nil)
      (setq mac-command-modifier 'super)
      (setq mac-option-modifier 'meta)
      (setq mac-pass-command-to-system nil)
      (setq org-use-speed-commands t)
-     (setq initial-buffer-choice "~/Documents/journal.org")
-     (setq initial-scratch-message "")
      (setq-default indent-tabs-mode nil)
      (show-paren-mode 1)
      (tool-bar-mode -1)
